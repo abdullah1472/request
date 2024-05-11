@@ -1,40 +1,86 @@
 import 'package:flutter/material.dart';
 
-final List<Map<String, String>> orders = [];
+class OrdersListScreen extends StatefulWidget {
+  final List<Map<String, String>> orders;
+  final String employeeName;
 
-class OrdersListScreen extends StatelessWidget {
-  const OrdersListScreen({super.key});
+  const OrdersListScreen({
+    Key? key,
+    required this.orders,
+    required this.employeeName,
+  }) : super(key: key);
 
+  @override
+  _OrdersListScreenState createState() => _OrdersListScreenState();
+}
+
+class _OrdersListScreenState extends State<OrdersListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('عرض الطلبات'),
+        title: Text('طلبات ${widget.employeeName}'),
       ),
-      body: ListView.builder(
-        itemCount: orders.length,
+      body: widget.orders.isEmpty
+          ? const Center(child: Text('لا توجد طلبات بعد'))
+          : ListView.builder(
+        itemCount: widget.orders.length,
         itemBuilder: (context, index) {
-          return Card( // وضع كل طلب داخل Card
-            margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 15), // إضافة هامش حول البطاقة
+          final order = widget.orders[index];
+          return Card(
+            margin: const EdgeInsets.all(10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            elevation: 5,
             child: ListTile(
-              title: Text(orders[index]['name']!),
-              subtitle: Text('رقم: ${orders[index]['contact']}\nطلب: ${orders[index]['order']}'),
-              trailing: IconButton( // زر الحذف لكل طلب
-                icon: const Icon(Icons.delete),
+              title: Text('الاسم: ${order['name']}'),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('رقم التواصل: ${order['contact']}'),
+                  Text('نوع الخدمة: ${order['serviceType']}'),
+                  const SizedBox(height: 5),
+                  Text('نص الطلب: ${order['order']}'),
+                ],
+              ),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
                 onPressed: () {
-                  orders.removeAt(index); // حذف الطلب من القائمة
-                  (context as Element).markNeedsBuild(); // تحديث واجهة المستخدم
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('تأكيد الحذف'),
+                        content: const Text('هل أنت متأكد من حذف هذا الطلب؟'),
+                        actions: <Widget>[
+                          TextButton(
+                            child: const Text('إلغاء'),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          TextButton(
+                            child: const Text('حذف'),
+                            onPressed: () {
+                              setState(() {
+                                widget.orders.removeAt(index);
+                              });
+                              Navigator.of(context).pop();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('تم حذف الطلب')),
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
                 },
               ),
             ),
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pop(context); // العودة إلى الصفحة الرئيسية
-        },
-        child: const Icon(Icons.home),
       ),
     );
   }
